@@ -22,7 +22,7 @@ def calculate_x_offset(x):
     offset = BASE_X_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += -2  * (x // 400)    
+    offset += -5  * (x // 31)    
     return offset
 def calculate_y_offset(y):
     """Calculate progressive X offset based on X coordinate"""
@@ -30,7 +30,7 @@ def calculate_y_offset(y):
     offset = Y_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += 1 * (y // 300)
+    offset += -5 * (y // 31)
     
     return offset
 ffmpeg_cmd = [
@@ -133,24 +133,24 @@ def main():
             resized_frame = cv2.resize(frame, (DISPLAY_WIDTH, DISPLAY_HEIGHT))
 
             # Overlay current mouse positions (both display and actual)
-            cv2.putText(
-                resized_frame,
-                f"Display: {current_pos[0]}, {current_pos[1]}",
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
-            cv2.putText(
-                resized_frame,
-                f"Actual: {current_scaled_pos[0]}, {current_scaled_pos[1]}",
-                (10, 60),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2
-            )
+            # cv2.putText(
+            #     resized_frame,
+            #     f"Display: {current_pos[0]}, {current_pos[1]}",
+            #     (10, 30),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.7,
+            #     (0, 255, 0),
+            #     2
+            # )
+            # cv2.putText(
+            #     resized_frame,
+            #     f"Actual: {current_scaled_pos[0]}, {current_scaled_pos[1]}",
+            #     (10, 60),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     0.7,
+            #     (0, 255, 0),
+            #     2
+            # )
 
             # Draw a dot where we last clicked
             if last_pos:
