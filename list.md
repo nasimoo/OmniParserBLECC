@@ -9,7 +9,7 @@ def calculate_x_offset(x):
     offset = BASE_X_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += -8  * (x // 31)    
+    offset += -9  * (x // 31)    
     return offset
 def calculate_y_offset(y):
     """Calculate progressive X offset based on X coordinate"""
@@ -17,8 +17,7 @@ def calculate_y_offset(y):
     offset = Y_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += -8 * (y // 31)
-    
+    offset += -9 * (y // 31)
 #HP
 
 # Basic offset

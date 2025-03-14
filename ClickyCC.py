@@ -16,7 +16,7 @@ class BoundingBoxUtils:
         """Calculate progressive X offset based on X coordinate."""
         try:
             offset = self.base_x_offset
-            offset += -8  * (x // 31)    
+            offset += -9  * (x // 31)    
             return int(offset)  # Ensure the result is an integer
         except Exception as e:
             print(f"Error in calculate_x_offset with x={x}: {e}")
@@ -25,7 +25,7 @@ class BoundingBoxUtils:
         """Calculate progressive Y offset based on Y coordinate."""
         try:
             offset = self.base_y_offset
-            offset += -8 * (y // 31)
+            offset += -9 * (y // 31)
             return int(offset)  # Ensure the result is an integer
         except Exception as e:
             print(f"Error in calculate_y_offset with y={y}: {e}")

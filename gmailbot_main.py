@@ -12,8 +12,8 @@ hid = HidUtils(BLUETOOTH_COM_PORT, BAUD_RATE)
 bbox_utils = BoundingBoxUtils(
     screen_width=1920,
     screen_height=1080,
-    base_x_offset=10,
-    base_y_offset=0
+    base_x_offset=-7,
+    base_y_offset=-5
 )
 def process_csv(file_path):
     processed_data = []
@@ -74,7 +74,7 @@ def main():
         CSV_FILE_PATH = "output\\wash\\myaccount_bbox_content.csv"
         hid.move_to_origin()
         bbox_utils.bbox_click("86", CSV_FILE_PATH, hid)  # Close Chrome
-        bbox_utils.bbox_click("58", CSV_FILE_PATH, hid, x_offset=-10)  # Open Chrome
+        bbox_utils.bbox_click("58", CSV_FILE_PATH, hid, x_offset=-20)  # Open Chrome
         time.sleep(10)
         for _ in range(2):
             hid.refresh_page()
@@ -82,7 +82,7 @@ def main():
         bbox_utils.bbox_click("59", CSV_FILE_PATH, hid)  # Open user profile
         time.sleep(10)
 
-        bbox_utils.bbox_click("52", CSV_FILE_PATH, hid)  # Open Add new Account
+        bbox_utils.bbox_click("8", CSV_FILE_PATH, hid, y_offset= 80)  # Open Add new Account
         time.sleep(10)
         CSV_FILE_PATH_2 = "output\\gmailcreate\\signin_bbox_content.csv"
         bbox_utils.bbox_click("83", CSV_FILE_PATH_2, hid)  # Open Create Account
@@ -112,7 +112,7 @@ def main():
         hid.press_up_down_loop("down", int(entry['gender']))  # Adjust for 0-based index
         hid.press_enter()
         time.sleep(10)
-        bbox_utils.bbox_click("41", CSV_FILE_PATH_4, hid,x_offset=60)  # Click Next    
+        bbox_utils.bbox_click("41", CSV_FILE_PATH_4, hid,x_offset=30)  # Click Next    
         time.sleep(5)
 
 

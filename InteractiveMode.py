@@ -13,7 +13,7 @@ DISPLAY_WIDTH = 960
 DISPLAY_HEIGHT = 540
 
 # Basic offset
-BASE_X_OFFSET = -10
+BASE_X_OFFSET = -7
 Y_OFFSET = -10
 
 def calculate_x_offset(x):
@@ -22,7 +22,7 @@ def calculate_x_offset(x):
     offset = BASE_X_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += -5  * (x // 31)    
+    offset += -9  * (x // 31)    
     return offset
 def calculate_y_offset(y):
     """Calculate progressive X offset based on X coordinate"""
@@ -30,7 +30,7 @@ def calculate_y_offset(y):
     offset = Y_OFFSET
     
     # Add -15 for every 250 pixels
-    offset += -5 * (y // 31)
+    offset += -9 * (y // 31)
     
     return offset
 ffmpeg_cmd = [
