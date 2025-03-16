@@ -11,7 +11,7 @@ from PIL import Image
 import io
 import base64
 import pandas as pd
-from utils import (
+from util.utils import (
     check_ocr_box,
     get_som_labeled_img,
     get_caption_model_processor,
