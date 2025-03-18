@@ -64,18 +64,6 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
-    print("Moving to origin")
-    try:
-        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
-            print("Error: HID serial connection is not open")
-            raise ConnectionError("HID serial connection is not open")
-        hid.move_to_origin()
-        print("Moved to origin successfully")
-    except Exception as e:
-        print(f"ERROR moving to origin: {str(e)}")
-        traceback.print_exc()
-        time.sleep(1)
-        raise
     print(f"Clicking on ID 3")
     try:
         # Check if CSV file exists and HID is connected
@@ -166,8 +154,38 @@ def main():
         traceback.print_exc()
         time.sleep(1)
         raise
-    print("Adding delay of 10 second(s)")
-    time.sleep(10)
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
+    print("Delay completed")
+    print("Refreshing page (F5)")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.refresh_page()
+        print("Page refreshed successfully")
+    except Exception as e:
+        print(f"ERROR refreshing page: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
+    print("Adding delay of 2 second(s)")
+    time.sleep(2)
+    print("Delay completed")
+    print("Refreshing page (F5)")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.refresh_page()
+        print("Page refreshed successfully")
+    except Exception as e:
+        print(f"ERROR refreshing page: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
     print("Delay completed")
     print(f"Clicking on ID 72")
     try:
@@ -277,8 +295,8 @@ def main():
         traceback.print_exc()
         time.sleep(1)
         raise
-    print("Adding delay of 1 second(s)")
-    time.sleep(1)
+    print("Adding delay of 10 second(s)")
+    time.sleep(10)
     print("Delay completed")
     # Screen Scope: googlemaps
     csv_file_path = os.path.join(output_dir, 'googlemaps_bbox.csv')
@@ -301,8 +319,8 @@ def main():
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        print(f"Executing type_input('5000 Legacy Dr Suite 329', 'Plano', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)")
-        hid.type_input('5000 Legacy Dr Suite 329', 'Plano', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)
+        print(f"Executing type_input('5000 Legacy Dr Suite 329', 'Plano', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)")
+        hid.type_input('5000 Legacy Dr Suite 329', 'Plano', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)
         print("Typing completed successfully")
     except Exception as e:
         print(f"ERROR typing at ID Plano: {str(e)}")
@@ -322,6 +340,39 @@ def main():
         traceback.print_exc()
         time.sleep(1)
         raise
+    # Screen Scope: addmissingplace
+    csv_file_path = os.path.join(output_dir, 'addmissingplace_bbox.csv')
+    print(f"Processing {csv_file_path}")
+    if not os.path.exists(csv_file_path):
+        print(f"WARNING: CSV file not found: {csv_file_path}")
+        print("Available files in output directory:")
+        try:
+            for file in os.listdir(output_dir):
+                if file.endswith('.csv'):
+                    print(f"  - {file}")
+        except Exception as e:
+            print(f"Error listing directory: {str(e)}")
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
+    print("Delay completed")
+    print(f"Clicking on ID 28")
+    try:
+        # Check if CSV file exists and HID is connected
+        if not os.path.exists(csv_file_path):
+            print(f"Error: CSV file not found: {csv_file_path}")
+            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        print(f"Executing bbox_click('28', {csv_file_path}, hid, x_offset=0, y_offset=0)")
+        bbox_utils.bbox_click('28', csv_file_path, hid, x_offset=0, y_offset=0)
+        print("Click completed successfully")
+    except Exception as e:
+        print(f"ERROR clicking on ID 28: {str(e)}")
+        traceback.print_exc()
+        # Pausing to let user see the error
+        time.sleep(1)
+        raise  # Re-raise to stop execution
     # Screen Scope: placedetails
     csv_file_path = os.path.join(output_dir, 'placedetails_bbox.csv')
     print(f"Processing {csv_file_path}")
@@ -334,6 +385,9 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
+    print("Adding delay of 7 second(s)")
+    time.sleep(7)
+    print("Delay completed")
     print(f"Typing 'Oasis Drug Detox Wellness' at ID 49")
     try:
         # Check if CSV file exists and HID is connected
@@ -343,8 +397,8 @@ def main():
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        print(f"Executing type_input('Oasis Drug Detox Wellness', '49', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)")
-        hid.type_input('Oasis Drug Detox Wellness', '49', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)
+        print(f"Executing type_input('Oasis Drug Detox Wellness', '49', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)")
+        hid.type_input('Oasis Drug Detox Wellness', '49', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)
         print("Typing completed successfully")
     except Exception as e:
         print(f"ERROR typing at ID 49: {str(e)}")
@@ -382,7 +436,7 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
-    print(f"Typing 'Oasis Drug Detox Wellness' at ID 8")
+    print(f"Typing 'Health Counselor' at ID 8")
     try:
         # Check if CSV file exists and HID is connected
         if not os.path.exists(csv_file_path):
@@ -391,8 +445,8 @@ def main():
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        print(f"Executing type_input('Oasis Drug Detox Wellness', '8', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)")
-        hid.type_input('Oasis Drug Detox Wellness', '8', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)
+        print(f"Executing type_input('Health Counselor', '8', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)")
+        hid.type_input('Health Counselor', '8', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)
         print("Typing completed successfully")
     except Exception as e:
         print(f"ERROR typing at ID 8: {str(e)}")
@@ -400,6 +454,9 @@ def main():
         # Pausing to let user see the error
         time.sleep(1)
         raise  # Re-raise to stop execution
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
+    print("Delay completed")
     # Screen Scope: categoryresult
     csv_file_path = os.path.join(output_dir, 'categoryresult_bbox.csv')
     print(f"Processing {csv_file_path}")
@@ -430,6 +487,9 @@ def main():
         # Pausing to let user see the error
         time.sleep(1)
         raise  # Re-raise to stop execution
+    print("Adding delay of 4 second(s)")
+    time.sleep(4)
+    print("Delay completed")
     # Screen Scope: addmoredetails
     csv_file_path = os.path.join(output_dir, 'addmoredetails_bbox.csv')
     print(f"Processing {csv_file_path}")
@@ -442,13 +502,31 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
-    print("Pressing down key 1 times with 0.5s delay")
+    print(f"Clicking on ID 6")
+    try:
+        # Check if CSV file exists and HID is connected
+        if not os.path.exists(csv_file_path):
+            print(f"Error: CSV file not found: {csv_file_path}")
+            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        print(f"Executing bbox_click('6', {csv_file_path}, hid, x_offset=0, y_offset=50)")
+        bbox_utils.bbox_click('6', csv_file_path, hid, x_offset=0, y_offset=50)
+        print("Click completed successfully")
+    except Exception as e:
+        print(f"ERROR clicking on ID 6: {str(e)}")
+        traceback.print_exc()
+        # Pausing to let user see the error
+        time.sleep(1)
+        raise  # Re-raise to stop execution
+    print("Pressing down key 16 times with 0.5s delay")
     try:
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        hid.press_up_down_loop("down", 1, delay=0.5)
-        print("down key pressed 1 times successfully")
+        hid.press_up_down_loop("down", 16, delay=0.5)
+        print("down key pressed 16 times successfully")
     except Exception as e:
         print(f"ERROR pressing down key: {str(e)}")
         traceback.print_exc()
@@ -487,9 +565,21 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
-    print("Adding delay of 7 second(s)")
-    time.sleep(7)
+    print("Adding delay of 6 second(s)")
+    time.sleep(6)
     print("Delay completed")
+    print("Scrolling down")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.scroll_down()
+        print("Scrolled down successfully")
+    except Exception as e:
+        print(f"ERROR scrolling down: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
     print(f"Typing '(214) 473-4778' at ID 50")
     try:
         # Check if CSV file exists and HID is connected
@@ -508,9 +598,27 @@ def main():
         # Pausing to let user see the error
         time.sleep(1)
         raise  # Re-raise to stop execution
-    print("Adding delay of 10 second(s)")
-    time.sleep(10)
+    print("Adding delay of 7 second(s)")
+    time.sleep(7)
     print("Delay completed")
+    print(f"Clicking on ID 48")
+    try:
+        # Check if CSV file exists and HID is connected
+        if not os.path.exists(csv_file_path):
+            print(f"Error: CSV file not found: {csv_file_path}")
+            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        print(f"Executing bbox_click('48', {csv_file_path}, hid, x_offset=0, y_offset=0)")
+        bbox_utils.bbox_click('48', csv_file_path, hid, x_offset=0, y_offset=0)
+        print("Click completed successfully")
+    except Exception as e:
+        print(f"ERROR clicking on ID 48: {str(e)}")
+        traceback.print_exc()
+        # Pausing to let user see the error
+        time.sleep(1)
+        raise  # Re-raise to stop execution
     # Screen Scope: okedits
     csv_file_path = os.path.join(output_dir, 'okedits_bbox.csv')
     print(f"Processing {csv_file_path}")
