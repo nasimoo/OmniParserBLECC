@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UiPath-like Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Actions Panel -->
+            <div class="col-md-3 actions-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">Available Actions</h3>
+                </div>
+                <div class="actions-list" id="actionsList">
+                    {% for action_id, action in actions.items() %}
+                    <div class="action-item" draggable="true" data-action-id="{{ action_id }}">
+                        <i class="fas fa-{{ 'mouse-pointer' if action_id == 'click' else 'keyboard' if 'press' in action_id else 'arrows-alt-v' if 'scroll' in action_id else 'font' if action_id == 'type_input' else 'home' if action_id == 'move_to_origin' else 'clock' if action_id == 'delay' else 'desktop' if action_id == 'screen_scope' }}"></i>
+                        <span>{{ action.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="col-md-6 canvas-container">
+                <div class="canvas-header">
+                    <div class="button-group">
+                        <button id="saveScript" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Script
+                        </button>
+                        <button id="playScript" class="btn btn-success">
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="scriptName" placeholder="Enter script name">
+                            <select class="form-select" id="scriptSelect" style="max-width: 200px;">
+                                <option value="">Select existing script</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="canvas" id="canvas">
+                    <div class="canvas-placeholder">
+                        Drag and drop actions here to create your sequence
+                    </div>
+                </div>
+                <!-- Output Panel -->
+                <div class="output-panel mt-3">
+                    <h4>Output</h4>
+                    <pre id="scriptOutput" class="output-content"></pre>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="col-md-3 properties-panel">
+                <h3>Properties</h3>
+                <div id="propertiesForm">
+                    <div class="alert alert-info">
+                        Select an action to configure its properties
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bounding Box Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="previewImage"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 

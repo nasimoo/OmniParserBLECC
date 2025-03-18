@@ -21,10 +21,10 @@ from util.utils import (
 @dataclass
 class ProcessingConfig:
     """Configuration for single frame capture and processing."""
-    capture_card_index: int = 1
+    capture_card_index: int = 0
     resolution: Tuple[int, int] = (1920, 1080)
     output_dir: str = "output"
-    model_path: str = "weights/icon_detect_v1_5/model_v1_5.pt"
+    model_path: str = "weights/icon_detect/model.pt"
     box_threshold: float = 0.05
     batch_size: int = 16
     caption_model_name: str = "florence2"
@@ -37,21 +37,27 @@ class SingleFrameProcessor:
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(exist_ok=True)
         
-        # Setup processing components
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        # Setup logging first
         self.setup_logging()
+        
+        # Setup processing components
+        # Configure device for Apple Silicon
+        os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+        torch.backends.mps.enable_fallback_on_unsupported_ops = True
+        
+        # Force MPS device for Apple Silicon
+        self.device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+        self.logger.info(f"Using device: {self.device}")
         
         # Initialize models
         self.som_model = self._load_som_model()
         self.caption_model_processor = self._load_caption_model()
 
     def setup_logging(self):
-        log_path = self.output_dir / 'processing.log'
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(log_path),
                 logging.StreamHandler()
             ]
         )
@@ -89,32 +95,61 @@ class SingleFrameProcessor:
         
         try:
             # Initialize capture
+            self.logger.info(f"Attempting to open capture card at index {self.config.capture_card_index}")
             cap = cv2.VideoCapture(self.config.capture_card_index)
+            
+            # Check if capture card is available
             if not cap.isOpened():
-                raise RuntimeError(f"Failed to open capture card at index {self.config.capture_card_index}")
+                self.logger.error(f"Failed to open capture card at index {self.config.capture_card_index}")
+                # Try to get more information about available devices
+                for i in range(10):  # Check first 10 indices
+                    test_cap = cv2.VideoCapture(i)
+                    if test_cap.isOpened():
+                        self.logger.info(f"Found available camera at index {i}")
+                        ret, _ = test_cap.read()
+                        if ret:
+                            self.logger.info(f"Camera at index {i} can capture frames")
+                        test_cap.release()
+                raise RuntimeError(f"Capture card not found at index {self.config.capture_card_index}. Please check if the capture card is properly connected.")
             
             # Set resolution
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.resolution[0])
             cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.resolution[1])
             
+            # Verify resolution was set
+            actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            self.logger.info(f"Capture resolution set to {actual_width}x{actual_height}")
+            
             # Capture one frame and wait for stabilization
             self.logger.info("Capturing warmup frame and waiting for stabilization (2 seconds)...")
             ret, _ = cap.read()
+            if not ret:
+                raise RuntimeError("Failed to capture warmup frame")
             time.sleep(2)  # Wait for stabilization
             
             # Capture the actual frame
             ret, frame = cap.read()
-            cap.release()
-            
             if not ret:
                 raise RuntimeError("Failed to capture frame")
             
+            self.logger.info(f"Successfully captured frame with shape {frame.shape}")
+            
+            # Ensure frame is in RGB format
+            if len(frame.shape) == 2:  # Grayscale
+                frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+            elif frame.shape[2] == 4:  # RGBA
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)
+            elif frame.shape[2] == 3:  # BGR
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
             # Save frame
-            frame_path = self.output_dir / "raw_frame.png"
-            cv2.imwrite(str(frame_path), frame)
+            frame_path = self.output_dir / "raw.png"
+            cv2.imwrite(str(frame_path), cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # Convert back to BGR for saving
             results['frame_path'] = str(frame_path)
             
             # Process frame
+            self.logger.info("Starting OCR processing...")
             ocr_bbox_rslt, is_goal_filtered = check_ocr_box(
                 str(frame_path),
                 display_img=False,
@@ -124,6 +159,14 @@ class SingleFrameProcessor:
                 use_paddleocr=True
             )
             text, ocr_bbox = ocr_bbox_rslt
+            
+            # Handle case where OCR fails to detect any text
+            if not text or not ocr_bbox:
+                self.logger.warning("No text detected in image, proceeding with empty OCR results")
+                text = []
+                ocr_bbox = []
+            else:
+                self.logger.info(f"OCR detected {len(text)} text elements")
             
             # Calculate box overlay config
             box_overlay_ratio = max(frame.shape[:2]) / 3200
@@ -135,27 +178,38 @@ class SingleFrameProcessor:
             }
             
             # Run detection
-            dino_labeled_img, label_coordinates, parsed_content_list = get_som_labeled_img(
-                str(frame_path),
-                self.som_model,
-                BOX_TRESHOLD=self.config.box_threshold,
-                output_coord_in_ratio=True,
-                ocr_bbox=ocr_bbox,
-                draw_bbox_config=draw_bbox_config,
-                caption_model_processor=self.caption_model_processor,
-                ocr_text=text,
-                use_local_semantics=True,
-                iou_threshold=0.7,
-                scale_img=False,
-                batch_size=self.config.batch_size
-            )
+            self.logger.info("Starting image processing with get_som_labeled_img...")
+            try:
+                dino_labeled_img, label_coordinates, parsed_content_list = get_som_labeled_img(
+                    str(frame_path),
+                    self.som_model,
+                    BOX_TRESHOLD=self.config.box_threshold,
+                    output_coord_in_ratio=True,
+                    ocr_bbox=ocr_bbox,
+                    draw_bbox_config=draw_bbox_config,
+                    caption_model_processor=self.caption_model_processor,
+                    ocr_text=text,
+                    use_local_semantics=True,
+                    iou_threshold=0.7,
+                    scale_img=False,
+                    batch_size=self.config.batch_size
+                )
+                
+                if dino_labeled_img is None or label_coordinates is None or parsed_content_list is None:
+                    self.logger.error("get_som_labeled_img returned None values")
+                    raise RuntimeError("Failed to process image with get_som_labeled_img")
+                
+                self.logger.info("Successfully processed image with get_som_labeled_img")
+            except Exception as e:
+                self.logger.error(f"Error during image processing: {str(e)}")
+                raise
             
             # Save results
-            output_image_path = self.output_dir / "labeled_frame.png"
+            output_image_path = self.output_dir / "parsed.png"
             decoded_image = Image.open(io.BytesIO(base64.b64decode(dino_labeled_img)))
             decoded_image.save(output_image_path)
             
-            output_csv_path = self.output_dir / "bbox_content.csv"
+            output_csv_path = self.output_dir / "bbox.csv"
             df = pd.DataFrame(parsed_content_list)
             df['ID'] = range(len(df))  # Add ID column
             df.to_csv(output_csv_path, index=False)

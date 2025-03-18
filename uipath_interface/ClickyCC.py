@@ -3,7 +3,10 @@ import time
 import csv
 import ast
 import random
+import os
 
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(PARENT_DIR, 'output')
 
 class BoundingBoxUtils:
     def __init__(self, screen_width, screen_height, base_x_offset, base_y_offset):
