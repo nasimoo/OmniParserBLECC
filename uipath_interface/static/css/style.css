@@ -394,4 +394,9 @@ body {
 .screen-scope-node.minimized {
     min-height: auto;
     padding-bottom: 10px;
+}
+
+/* Make Test Scope button text and icon black */
+.btn-warning i, .btn-warning {
+    color: #000 !important; 
 } 

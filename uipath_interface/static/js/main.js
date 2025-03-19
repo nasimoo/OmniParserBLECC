@@ -525,6 +525,21 @@ function createScreenScopeNode(scopeData) {
     headerLeft.appendChild(minimizeBtn);
     headerLeft.appendChild(title);
     
+    // Right section of header with control buttons
+    const headerRight = document.createElement('div'); 
+    headerRight.className = 'd-flex align-items-center';
+    
+    // Add Test Scope button
+    const testScopeBtn = document.createElement('button');
+    testScopeBtn.className = 'btn btn-sm btn-warning me-2';
+    testScopeBtn.innerHTML = '<i class="fas fa-play"></i> Test Scope';
+    testScopeBtn.style.color = '#000'; // Make text black
+    testScopeBtn.title = 'Run only this screen scope (starts with move_to_origin for safety)';
+    testScopeBtn.onclick = (e) => {
+        e.stopPropagation();
+        testSingleScope(node);
+    };
+    
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-danger';
     deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
@@ -534,8 +549,11 @@ function createScreenScopeNode(scopeData) {
         updateAllOrderNumbers();
     };
     
+    headerRight.appendChild(testScopeBtn);
+    headerRight.appendChild(deleteBtn);
+    
     header.appendChild(headerLeft);
-    header.appendChild(deleteBtn);
+    header.appendChild(headerRight);
     content.appendChild(header);
     
     // Add preview image
@@ -917,11 +935,23 @@ function updatePropertiesForm(action) {
             const input = document.createElement('input');
             input.type = 'checkbox';
             input.className = 'form-check-input';
+            input.id = 'click_before_checkbox';
             input.name = param;
+            
+            // Check if this property already exists in existingProperties
+            if (existingProperties.hasOwnProperty(param)) {
+                console.log(`Setting checkbox based on existing value: ${existingProperties[param]}`);
+                input.checked = existingProperties[param] === 'on';
+            } else {
+                // Set checked by default for new actions
+                console.log('Setting checkbox checked by default');
+                input.checked = true;
+            }
             
             const label = document.createElement('label');
             label.className = 'form-check-label';
-            label.textContent = 'Click before action';
+            label.htmlFor = 'click_before_checkbox';
+            label.textContent = 'Click before typing';
             
             checkbox.appendChild(input);
             checkbox.appendChild(label);
@@ -964,10 +994,31 @@ function saveNodeProperties(form) {
     const formData = new FormData(form);
     const properties = {};
     
+    // Get the actionId to determine if we need to handle the click_before checkbox
+    const actionId = selectedNode.dataset.actionId;
+    
+    // First collect checkbox input elements for special handling
+    const checkboxes = {};
+    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkboxes[checkbox.name] = checkbox.checked ? 'on' : 'off';
+    });
+    
+    // Then collect all other form data
     for (const [key, value] of formData.entries()) {
         properties[key] = value;
     }
     
+    // Add checkbox values separately since unchecked boxes don't appear in formData
+    for (const [key, value] of Object.entries(checkboxes)) {
+        properties[key] = value;
+    }
+    
+    // Special handling for type_input action to ensure click_before is always included
+    if (actionId === 'type_input' && !properties.hasOwnProperty('click_before')) {
+        properties['click_before'] = 'off';
+    }
+    
+    console.log('Saving properties:', properties);
     selectedNode.dataset.properties = JSON.stringify(properties);
     
     // Update node display using the updateNodeDisplay function
@@ -1006,7 +1057,8 @@ function updateNodeDisplay(node) {
                 return `CSV: ${value.split('/').pop()}`;
             }
             if (key === 'click_before') {
-                return value === 'on' ? 'Click Before' : '';
+                // Make click_before status more obvious
+                return value === 'on' ? '✓ Click Before' : '✗ No Click';
             }
             if (key === 'x_offset' || key === 'y_offset') {
                 return `${key}: ${value}`;
@@ -1014,6 +1066,12 @@ function updateNodeDisplay(node) {
             if (key === 'bbox_id') {
                 console.log('Found bbox_id:', value);
                 return `BBox: ${value}`;
+            }
+            if (key === 'text' && value.length > 20) {
+                // Truncate long text values
+                return `"${value.substring(0, 20)}..."`;
+            } else if (key === 'text') {
+                return `"${value}"`;
             }
             return value;
         })
@@ -2163,3 +2221,121 @@ function dropActionOnContainer(e, container) {
     updatePlaceholderVisibility();
     updateAllOrderNumbers();
 } 
+
+// Add the testSingleScope function after the playScript function
+async function testSingleScope(scopeNode) {
+    if (isPlaying) {
+        showToast('Another script is already running', 'error');
+        return;
+    }
+    
+    // Get the script name for reference
+    const scriptName = document.getElementById('scriptName').value || 'current_script';
+    
+    // Get scope details
+    const scopeName = scopeNode.dataset.name;
+    const scopeCsvPath = scopeNode.dataset.csvPath;
+    
+    if (!scopeCsvPath) {
+        showToast('This scope has no CSV file selected. Please set one before testing.', 'error');
+        return;
+    }
+    
+    // Extract actions from this scope
+    const scopeActions = Array.from(scopeNode.querySelectorAll('.scope-actions-container .action-node')).map(actionNode => ({
+        id: actionNode.dataset.actionId,
+        properties: JSON.parse(actionNode.dataset.properties || '{}')
+    }));
+    
+    if (scopeActions.length === 0) {
+        showToast('This scope has no actions to run', 'warning');
+        return;
+    }
+    
+    // Build the single scope object
+    const singleScope = {
+        id: 'screen_scope',
+        properties: {
+            name: scopeName,
+            csv_path: scopeCsvPath,
+            actions: scopeActions
+        }
+    };
+    
+    // Prepare array with initialization actions + the scope
+    // We need initialization and move_to_origin for proper setup
+    const testActions = [
+        // Add a move_to_origin action at the start for safety
+        {
+            id: 'move_to_origin',
+            properties: {}
+        },
+        // Add the scope itself
+        singleScope
+    ];
+    
+    console.log('Testing scope:', scopeName);
+    console.log('Actions to run:', testActions);
+    
+    // Provide visual feedback
+    const outputElement = document.getElementById('scriptOutput');
+    outputElement.textContent = `Preparing to test scope: ${scopeName}...\n`;
+    outputElement.textContent += `For safety, a move_to_origin action will be executed first.\n`;
+    
+    // Disable the play button and show the stop button
+    const playBtn = document.getElementById('playScript');
+    const stopBtn = document.getElementById('stopScript');
+    playBtn.disabled = true;
+    stopBtn.style.display = 'inline-block';
+    isPlaying = true;
+    
+    try {
+        // Call the server to run just this scope
+        const response = await fetch('/api/test_scope', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: `${scriptName}_${scopeName}_test`,
+                actions: testActions
+            })
+        });
+        
+        // Process response
+        const data = await response.json();
+        
+        if (response.ok) {
+            outputElement.textContent += data.output + '\n';
+            
+            if (data.error && data.error.trim()) {
+                outputElement.textContent += "Errors:\n" + data.error + '\n';
+            }
+            
+            showToast(`Scope test completed`, 'success');
+        } else {
+            outputElement.textContent += `Error: ${data.error}\n`;
+            if (data.error_output) {
+                outputElement.textContent += data.error_output + '\n';
+            }
+            
+            if (data.error_analysis) {
+                outputElement.textContent += "Error Analysis:\n";
+                data.error_analysis.forEach(item => {
+                    outputElement.textContent += "- " + item + '\n';
+                });
+            }
+            
+            showToast('Error testing scope', 'error');
+        }
+    } catch (error) {
+        console.error('Error testing scope:', error);
+        outputElement.textContent += `Error: ${error.message || 'Unknown error'}\n`;
+        showToast('Error testing scope. Check console for details.', 'error');
+    } finally {
+        // Re-enable the play button and hide the stop button
+        playBtn.disabled = false;
+        stopBtn.style.display = 'none';
+        isPlaying = false;
+    }
+}
