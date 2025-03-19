@@ -1,10 +1,10 @@
 Image Name,OCR Time (s),Caption Time (s),Total Time (s)
-google_page.png,4.65,4.23,8.88
-windows_home.png,0.55,2.31,2.86
-mac_home.png,1.49,4.11,5.60
-mac_home_vs.png,5.48,8.19,13.67
-windows_multitab.png,14.15,6.89,21.04
-omni3.jpg,5.69,5.70,11.39
-ios.png,2.08,2.09,4.17
-word.png,10.40,24.18,34.58
-excel.png,9.16,45.99,55.15
+google_page.png,4.94,5.00,9.94
+windows_home.png,0.57,2.55,3.12
+mac_home.png,1.54,5.04,6.58
+mac_home_vs.png,5.95,9.39,15.34
+windows_multitab.png,14.98,9.94,24.92
+omni3.jpg,5.99,5.71,11.70
+ios.png,2.13,2.89,5.01
+word.png,10.75,23.91,34.66
+excel.png,9.35,46.11,55.46

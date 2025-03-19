@@ -1,3 +1,81 @@
+# OmniParserBLECC
+
+A web-based UI for creating and executing automation scripts that interact with the UI of other applications.
+
+## Project Structure
+
+The project is organized as follows:
+
+```
+OmniParserBLECC/
+├── scripts/                   # Python scripts created by the user
+├── uipath_interface/          # Main Flask application
+│   ├── app.py                 # Flask server
+│   ├── static/                # Static assets
+│   │   ├── css/               # Stylesheets
+│   │   ├── js/                # JavaScript files
+│   │   │   ├── main.js        # Main JavaScript entry point
+│   │   │   ├── dragAndDrop.js # Drag and drop functionality
+│   │   │   ├── nodeManager.js # Node creation and management
+│   │   │   ├── scriptExecution.js # Script execution handling
+│   │   │   ├── propertyPanel.js # Properties panel functionality
+│   │   │   ├── csvUtils.js    # CSV-related functionality
+│   │   │   └── uiUtils.js     # UI utility functions
+│   │   └── img/               # Images
+│   └── templates/             # HTML templates
+│       └── index.html         # Main application page
+└── README.md                  # This file
+```
+
+## Running the Application
+
+To run the application:
+
+1. Ensure Python 3.7+ is installed
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Start the Flask server:
+   ```
+   cd uipath_interface
+   python app.py
+   ```
+4. Navigate to `http://localhost:5000` in your web browser
+
+## Features
+
+- Drag-and-drop interface for creating automation scripts
+- Support for screen scopes to organize actions by UI context
+- CSV loop functionality for data-driven automation
+- Real-time script execution and feedback
+- Properties panel for configuring actions and scopes
+- Ability to save and load scripts
+
+## API Endpoints
+
+The application provides the following API endpoints:
+
+- `/api/scripts` - Get a list of available scripts
+- `/api/actions` - Get a list of available actions
+- `/api/save_script` - Save a script
+- `/api/run_script` - Run a script (SSE endpoint)
+- `/api/stop_script` - Stop a running script
+- `/api/get_csv_columns` - Get columns from a CSV file
+- `/api/output/` - Access to output files (screenshots, etc.)
+
+## Modularization
+
+The JavaScript code has been modularized to improve maintainability and organization:
+
+- `main.js`: Entry point, initializes the application
+- `dragAndDrop.js`: Handles drag and drop functionality
+- `nodeManager.js`: Manages the creation and updating of nodes
+- `scriptExecution.js`: Handles script execution and interaction with the API
+- `propertyPanel.js`: Manages the properties panel UI and form handling
+- `csvUtils.js`: Handles CSV-related functionality
+- `uiUtils.js`: Provides utility functions for UI elements
+
 # OmniParser: Screen Parsing tool for Pure Vision Based GUI Agent
 
 <p align="center">
