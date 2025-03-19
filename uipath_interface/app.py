@@ -72,6 +72,11 @@ AVAILABLE_ACTIONS = {
         "description": "Press up or down arrow keys multiple times",
         "parameters": ["direction", "times", "delay"]
     },
+    "refresh_page": {
+        "name": "Refresh Page",
+        "description": "Refresh the page (F5)",
+        "parameters": []
+    },
     "screen_scope": {
         "name": "Screen Scope",
         "description": "Change to a different screen scope",
@@ -246,16 +251,16 @@ def play_script():
             except Exception as read_e:
                 print(f"Warning: Unable to read script header: {str(read_e)}")
             
-            # Increased timeout to 60 seconds
+            # Increased timeout to 300 seconds (5 minutes)
             try:
                 print("Waiting for process to complete...")
-                stdout, stderr = process.communicate(timeout=60)
+                stdout, stderr = process.communicate(timeout=300)
                 print("Process completed.")
                 # Clear the global process variable if it completed successfully
                 if script_process == process:
                     script_process = None
             except subprocess.TimeoutExpired:
-                print("Process timed out after 60 seconds.")
+                print("Process timed out after 300 seconds.")
                 # Only kill if it's still our current process
                 if script_process == process:
                     print(f"Killing process {process.pid} due to timeout.")
@@ -269,7 +274,7 @@ def play_script():
                         "output": "Script execution was stopped by user."
                     })
                 return jsonify({
-                    "error": "Script execution timed out after 60 seconds",
+                    "error": "Script execution timed out after 300 seconds",
                     "output": stdout,
                     "error_output": stderr,
                     "error_details": "The script took too long to complete. This could be due to hardware connection issues or a problem in the script itself."
@@ -350,6 +355,165 @@ def stop_script():
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Unhandled error in server: {str(e)}"}), 500
+
+@app.route('/api/test_scope', methods=['POST'])
+def test_scope():
+    """API endpoint to test a single screen scope."""
+    global script_process
+    try:
+        data = request.json
+        scope_name = data.get('name', 'test_scope')
+        actions = data.get('actions', [])
+        
+        if not actions:
+            return jsonify({"error": "No actions provided for testing"}), 400
+            
+        # Ensure move_to_origin is the first action
+        has_move_to_origin = False
+        for i, action in enumerate(actions):
+            if action.get('id') == 'move_to_origin':
+                if i > 0:
+                    # If move_to_origin exists but not as first action, move it to the front
+                    move_action = actions.pop(i)
+                    actions.insert(0, move_action)
+                has_move_to_origin = True
+                break
+        
+        # If move_to_origin is not in the actions at all, add it as the first action
+        if not has_move_to_origin:
+            actions.insert(0, {'id': 'move_to_origin', 'properties': {}})
+            
+        print("Testing scope with actions:", [a.get('id') for a in actions])
+        
+        # Generate a temporary script for this scope
+        scripts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts')
+        os.makedirs(scripts_dir, exist_ok=True)
+        
+        # Use a unique name for the temp script
+        import uuid
+        temp_script_name = f"temp_scope_{uuid.uuid4().hex[:8]}"
+        temp_script_path = os.path.join(scripts_dir, f"{temp_script_name}.py")
+        
+        # Generate script content for just this scope
+        script_content = generate_script_content(actions, include_test_movement=False)
+        
+        # Add a clear comment at the top of the script about the move to origin safety feature
+        script_content_lines = script_content.split('\n')
+        
+        # Find where the main function is defined and add our safety comment
+        for i, line in enumerate(script_content_lines):
+            if line.startswith("def main():"):
+                # Insert our safety comment after the def main() line
+                script_content_lines.insert(i+1, "    # SAFETY FEATURE: Moving to origin first for safe operation")
+                script_content_lines.insert(i+2, "    print('\\n==============================================')")
+                script_content_lines.insert(i+3, "    print('SAFETY: Moving cursor to origin (0,0) position')")
+                script_content_lines.insert(i+4, "    print('==============================================\\n')")
+                break
+                
+        # Recombine the script with our added comments
+        script_content = '\n'.join(script_content_lines)
+        
+        # Write the temporary script file
+        with open(temp_script_path, 'w') as f:
+            f.write(script_content)
+        
+        print(f"Created temporary script for scope testing: {temp_script_path}")
+        
+        # Kill any existing process
+        if script_process is not None:
+            try:
+                script_process.kill()
+            except Exception as kill_e:
+                print(f"Warning: Failed to kill existing process: {str(kill_e)}")
+            script_process = None
+            
+        # Get the project root directory (parent of uipath_interface)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        # Log information about the script being executed
+        print(f"Executing scope test script: {temp_script_path}")
+        print(f"Working directory: {project_root}")
+        print(f"Python executable: {sys.executable}")
+        
+        # Set up environment variables
+        env = os.environ.copy()
+        env['PYTHONPATH'] = project_root + os.pathsep + env.get('PYTHONPATH', '')
+        env['PYTHONUNBUFFERED'] = '1'  # Ensure output is not buffered
+        
+        # Run the script with a slightly smaller timeout for scope testing
+        print("Starting subprocess for scope testing...")
+        process = subprocess.Popen(
+            [sys.executable, '-u', temp_script_path],  # -u for unbuffered output
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,  # Line buffering
+            cwd=project_root,  # Set working directory to project root
+            env=env  # Pass the modified environment
+        )
+        
+        print(f"Started process with PID: {process.pid}")
+        script_process = process
+        
+        # Wait for process to complete with a shorter timeout (2 minutes)
+        try:
+            stdout, stderr = process.communicate(timeout=120)
+            print("Process completed.")
+            if script_process == process:
+                script_process = None
+        except subprocess.TimeoutExpired:
+            print("Process timed out after 120 seconds.")
+            if script_process == process:
+                print(f"Killing process {process.pid} due to timeout.")
+                process.kill()
+                stdout, stderr = process.communicate()
+                script_process = None
+            else:
+                return jsonify({
+                    "message": "Scope test was stopped",
+                    "output": "Scope test was stopped by user."
+                })
+            return jsonify({
+                "error": "Scope test timed out after 120 seconds",
+                "output": stdout,
+                "error_output": stderr,
+                "error_details": "The test took too long to complete."
+            }), 500
+        
+        # Clean up the temporary script file
+        try:
+            os.remove(temp_script_path)
+            print(f"Removed temporary script file: {temp_script_path}")
+        except Exception as e:
+            print(f"Warning: Failed to remove temporary script file: {str(e)}")
+        
+        # Check for common error patterns in the output
+        error_analysis = analyze_script_output(stdout, stderr)
+        
+        if process.returncode == 0:
+            return jsonify({
+                "message": "Scope test executed successfully",
+                "output": stdout,
+                "error": stderr
+            })
+        else:
+            return jsonify({
+                "error": f"Scope test failed with return code: {process.returncode}",
+                "output": stdout,
+                "error": stderr,
+                "error_analysis": error_analysis
+            }), 500
+            
+    except Exception as e:
+        print(f"Error executing scope test: {str(e)}")
+        import traceback
+        traceback_info = traceback.format_exc()
+        print(f"Traceback: {traceback_info}")
+        return jsonify({
+            "error": f"Error executing scope test: {str(e)}",
+            "traceback": traceback_info,
+            "details": "There was an error while executing the scope test."
+        }), 500
 
 def generate_script_content(actions, include_test_movement=False):
     script_lines = []
@@ -481,7 +645,7 @@ def generate_script_content(actions, include_test_movement=False):
         elif action_id == 'type_input':
             text = properties.get('text', '')
             bbox_id = properties.get('bbox_id', '')
-            click_before = properties.get('click_before', 'False').lower() == 'on'
+            click_before = properties.get('click_before', 'on').lower() == 'on'  # Default to True (on) if not specified
             x_offset = properties.get('x_offset', 0)
             y_offset = properties.get('y_offset', 0)
             script_lines.append(f"    print(f\"Typing '{text}' at ID {bbox_id}\")")
@@ -569,6 +733,20 @@ def generate_script_content(actions, include_test_movement=False):
             script_lines.append("        print(\"Moved to origin successfully\")")
             script_lines.append("    except Exception as e:")
             script_lines.append("        print(f\"ERROR moving to origin: {str(e)}\")")
+            script_lines.append("        traceback.print_exc()")
+            script_lines.append("        time.sleep(1)")
+            script_lines.append("        raise")
+            
+        elif action_id == 'refresh_page':
+            script_lines.append("    print(\"Refreshing page (F5)\")")
+            script_lines.append("    try:")
+            script_lines.append("        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:")
+            script_lines.append("            print(\"Error: HID serial connection is not open\")")
+            script_lines.append("            raise ConnectionError(\"HID serial connection is not open\")")
+            script_lines.append("        hid.refresh_page()")
+            script_lines.append("        print(\"Page refreshed successfully\")")
+            script_lines.append("    except Exception as e:")
+            script_lines.append("        print(f\"ERROR refreshing page: {str(e)}\")")
             script_lines.append("        traceback.print_exc()")
             script_lines.append("        time.sleep(1)")
             script_lines.append("        raise")
@@ -779,8 +957,14 @@ def parse_script_content(script_content):
                         csv_file = param.split('=')[1].strip().strip("'\"")
                         params['csv_file'] = csv_file
                     elif 'click_before=' in param:
-                        click_before = param.split('=')[1].strip()
-                        params['click_before'] = click_before
+                        click_before_value = param.split('=')[1].strip()
+                        # Convert Python boolean to on/off
+                        if click_before_value.lower() == 'true':
+                            params['click_before'] = 'on'
+                        elif click_before_value.lower() == 'false':
+                            params['click_before'] = 'off'
+                        else:
+                            params['click_before'] = click_before_value
                     elif 'x_offset=' in param:
                         x_offset = param.split('=')[1].strip()
                         params['x_offset'] = x_offset
@@ -846,6 +1030,18 @@ def parse_script_content(script_content):
             else:
                 actions.append({
                     'id': 'scroll_down',
+                    'properties': {}
+                })
+                
+        elif 'hid.refresh_page' in line:
+            if current_scope:
+                current_scope['properties']['actions'].append({
+                    'id': 'refresh_page',
+                    'properties': {}
+                })
+            else:
+                actions.append({
+                    'id': 'refresh_page',
                     'properties': {}
                 })
                 
