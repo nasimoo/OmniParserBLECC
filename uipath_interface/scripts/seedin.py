@@ -106,8 +106,8 @@ def main():
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        print(f"Executing bbox_click('12', {csv_file_path}, hid, x_offset=-170, y_offset=-45)")
-        bbox_utils.bbox_click('12', csv_file_path, hid, x_offset=-170, y_offset=-45)
+        print(f"Executing bbox_click('12', {csv_file_path}, hid, x_offset=-160, y_offset=-45)")
+        bbox_utils.bbox_click('12', csv_file_path, hid, x_offset=-160, y_offset=-45)
         print("Click completed successfully")
     except Exception as e:
         print(f"ERROR clicking on ID 12: {str(e)}")
@@ -151,6 +151,51 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
+    print(f"Typing '{randomsearch}' at ID 1")
+    try:
+        # Check if CSV file exists and HID is connected
+        if not os.path.exists(csv_file_path):
+            print(f"Error: CSV file not found: {csv_file_path}")
+            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        print(f"Executing type_input('{randomsearch}', '1', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)")
+        hid.type_input('{randomsearch}', '1', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)
+        print("Typing completed successfully")
+    except Exception as e:
+        print(f"ERROR typing at ID 1: {str(e)}")
+        traceback.print_exc()
+        # Pausing to let user see the error
+        time.sleep(1)
+        raise  # Re-raise to stop execution
+    print("Pressing Enter key")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.press_enter()
+        print("Enter key pressed successfully")
+    except Exception as e:
+        print(f"ERROR pressing Enter key: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
+    print("Pressing down key 12 times with 0.5s delay")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.press_up_down_loop("down", 12, delay=0.5)
+        print("down key pressed 12 times successfully")
+    except Exception as e:
+        print(f"ERROR pressing down key: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
+    print("Delay completed")
     print(f"Typing 'maps.google.com' at ID 1")
     try:
         # Check if CSV file exists and HID is connected
@@ -181,8 +226,8 @@ def main():
         traceback.print_exc()
         time.sleep(1)
         raise
-    print("Adding delay of 5 second(s)")
-    time.sleep(5)
+    print("Adding delay of 12 second(s)")
+    time.sleep(12)
     print("Delay completed")
     print("Refreshing page (F5)")
     try:
@@ -241,8 +286,8 @@ def main():
         if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
             print("Error: HID serial connection is not open")
             raise ConnectionError("HID serial connection is not open")
-        print(f"Executing type_input('{email}', '17', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)")
-        hid.type_input('{email}', '17', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=False, x_offset=0, y_offset=0)
+        print(f"Executing type_input('{email}', '17', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)")
+        hid.type_input('{email}', '17', bbox_utils=bbox_utils, csv_file_path=csv_file_path, click_before=True, x_offset=0, y_offset=0)
         print("Typing completed successfully")
     except Exception as e:
         print(f"ERROR typing at ID 17: {str(e)}")
@@ -322,6 +367,18 @@ def main():
                     print(f"  - {file}")
         except Exception as e:
             print(f"Error listing directory: {str(e)}")
+    print("Refreshing page (F5)")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.refresh_page()
+        print("Page refreshed successfully")
+    except Exception as e:
+        print(f"ERROR refreshing page: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
     print("Adding delay of 10 second(s)")
     time.sleep(10)
     print("Delay completed")
@@ -378,6 +435,21 @@ def main():
         raise  # Re-raise to stop execution
     print("Adding delay of 6 second(s)")
     time.sleep(6)
+    print("Delay completed")
+    print("Refreshing page (F5)")
+    try:
+        if not hasattr(hid, 'ser') or not hid.ser or not hid.ser.is_open:
+            print("Error: HID serial connection is not open")
+            raise ConnectionError("HID serial connection is not open")
+        hid.refresh_page()
+        print("Page refreshed successfully")
+    except Exception as e:
+        print(f"ERROR refreshing page: {str(e)}")
+        traceback.print_exc()
+        time.sleep(1)
+        raise
+    print("Adding delay of 5 second(s)")
+    time.sleep(5)
     print("Delay completed")
     # Screen Scope: googlemaps
     csv_file_path = os.path.join(output_dir, 'googlemaps_bbox.csv')
@@ -799,6 +871,9 @@ def main():
         # Pausing to let user see the error
         time.sleep(1)
         raise  # Re-raise to stop execution
+    print("Adding delay of 10 second(s)")
+    time.sleep(10)
+    print("Delay completed")
     print("Script execution completed!")
 
 if __name__ == '__main__':

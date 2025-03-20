@@ -219,3 +219,31 @@ If you find our work useful, please consider citing our work:
       url={https://arxiv.org/abs/2408.00203}, 
 }
 ```
+
+## Android Debug Bridge (ADB) Installation
+
+To use the `Clickyadb.py` script, you need to install ADB (Android Debug Bridge):
+
+#### macOS
+```bash
+# Using Homebrew
+brew install android-platform-tools
+```
+
+#### Windows
+```bash
+# Using Chocolatey
+choco install adb
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+# Using apt
+sudo apt update
+sudo apt install adb
+```
+
+You can verify the installation with:
+```bash
+adb version
+```

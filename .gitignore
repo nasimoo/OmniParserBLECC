@@ -7,6 +7,6 @@ weights/icon_detect_v1_5_2/
 __pycache__/
 debug.ipynb
 myenv
-
+credentials.json
 screenshots/
 weights/
